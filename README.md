@@ -42,7 +42,7 @@ The following regions exist:
 - Tundra
 - Ice sheet
 
-### Climate that makes sense
+### Realistic Climate
 
 The mod includes 2 world types:
 
@@ -117,6 +117,13 @@ Trailhead is released under the [MIT License](LICENSE).
 <table>
   <tr>
     <td colspan="2"><img src="art/gallery/alpine-valley.jpg" alt="Alpine valley"><br><sub><b>Alpine valley</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="art/gallery/cascade-volcano.jpg" alt="Cascade volcano"><br><sub><b>Cascade volcano</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="art/gallery/granite-valley.jpg" alt="Granite valley"><br><sub><b>Granite valley</sub></td>
+    <td width="50%"><img src="art/gallery/autumn-heath.jpg" alt="Autumn heath"><br><sub><b>Autumn heath</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="art/gallery/dolomites.jpg" alt="Dolomites"><br><sub><b>Dolomites</sub></td>
