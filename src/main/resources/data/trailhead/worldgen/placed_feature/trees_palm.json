@@ -1,0 +1,24 @@
+{
+  "feature": "trailhead:palm",
+  "placement": [
+    {
+      "type": "minecraft:count",
+      "count": {
+        "type": "minecraft:weighted_list",
+        "distribution": [
+          { "data": 0, "weight": 3 },
+          { "data": 1, "weight": 3 },
+          { "data": 3, "weight": 2 }
+        ]
+      }
+    },
+    { "type": "minecraft:in_square" },
+    { "type": "minecraft:surface_water_depth_filter", "max_water_depth": 0 },
+    { "type": "minecraft:heightmap", "heightmap": "OCEAN_FLOOR" },
+    {
+      "type": "minecraft:block_predicate_filter",
+      "predicate": { "type": "minecraft:matching_blocks", "offset": [0, -1, 0], "blocks": ["minecraft:sand", "minecraft:grass_block"] }
+    },
+    { "type": "minecraft:biome" }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "trailhead:coastal_grassland", "trailhead:fjord_forest", "trailhead:fjord_highland",
+    "trailhead:alpine_meadow", "trailhead:subalpine_forest", "trailhead:valley_forest",
+    "trailhead:autumn_forest", "trailhead:temperate_meadow", "trailhead:temperate_woodland",
+    "trailhead:sagebrush_flats", "trailhead:aspen_forest", "trailhead:temperate_rainforest",
+    "trailhead:larch_basin", "trailhead:canyon_rim", "trailhead:canyon_floor",
+    "trailhead:prairie", "trailhead:steppe", "trailhead:savanna", "trailhead:sand_sea",
+    "trailhead:rocky_desert", "trailhead:tropical_rainforest", "trailhead:boreal_forest",
+    "trailhead:tundra", "trailhead:desert_caves", "trailhead:ice_caves"
+  ]
+}

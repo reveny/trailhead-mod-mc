@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"id": "trailhead",
+	"version": "${version}",
+	"name": "Trailhead",
+	"description": "Realistic, national park inspired world generation: climate zones, mountain ranges, canyons, fjords, rivers, lakes, waterfalls and geology-aware caves.",
+	"authors": [
+		"Reveny"
+	],
+	"contact": {
+		"homepage": "https://github.com/reveny/trailhead-mod-mc",
+		"sources": "https://github.com/reveny/trailhead-mod-mc",
+		"issues": "https://github.com/reveny/trailhead-mod-mc/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/trailhead/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.reveny.trailhead.TrailheadMod"
+		],
+		"client": [
+			"com.reveny.trailhead.client.TrailheadClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.8",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"distanthorizons": "*",
+		"iris": "*"
+	}
+}

@@ -1,0 +1,101 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	exclusiveContent {
+		forRepository { maven { name = "Modrinth"; url = "https://api.modrinth.com/maven" } }
+		filter { includeGroup "maven.modrinth" }
+	}
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	runs {
+		autoshot {
+			inherit client
+			configName = "Autoshot"
+			vmArg "-Dtrailhead.autoshot=${project.findProperty('shots') ?: file('dev/shots.txt').absolutePath}"
+			vmArg "-Dtrailhead.autoshot.tag=${project.findProperty('tag') ?: 'capture'}"
+			vmArg "-Dtrailhead.autoshot.wait=${project.findProperty('wait') ?: '600'}"
+			vmArg "-Xmx6G"
+			programArgs "--quickPlaySingleplayer", "rt_test", "--width", "1920", "--height", "1080"
+		}
+	}
+
+	mods {
+		"trailhead" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	if (project.findProperty("devShaders") != "false") {
+		modLocalRuntime "maven.modrinth:sodium:mc1.21.8-0.7.3-fabric"
+		modLocalRuntime "maven.modrinth:iris:1.9.6+1.21.8-fabric"
+		localRuntime "org.anarres:jcpp:1.4.14"
+		localRuntime "io.github.douira:glsl-transformer:3.0.0-pre3"
+		localRuntime "org.antlr:antlr4-runtime:4.13.1"
+		modLocalRuntime "maven.modrinth:distanthorizons:3.3.2-1.21.8"
+		modLocalRuntime "maven.modrinth:bettergrassify:1.8.6+fabric.1.21.10"
+	}
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.register("terrainPreview", JavaExec) {
+	group = "verification"
+	description = "Renders offline terrain preview images and runs terrain checks."
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = "com.reveny.trailhead.debug.TerrainDebugPreview"
+}
+
+jar {
+	inputs.property "archivesName", project.base.archivesName
+
+	from("LICENSE") {
+		rename { "${it}_${inputs.properties.archivesName}"}
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
+			from components.java
+		}
+	}
+}

@@ -1,0 +1,5 @@
+{
+  "replace": false,
+  "values": ["trailhead:prairie", "trailhead:temperate_meadow", "trailhead:alpine_meadow",
+    "trailhead:coastal_grassland", "trailhead:sagebrush_flats"]
+}

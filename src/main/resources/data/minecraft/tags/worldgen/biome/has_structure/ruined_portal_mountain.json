@@ -1,0 +1,5 @@
+{
+  "replace": false,
+  "values": ["trailhead:alpine_scree", "trailhead:alpine_summit", "trailhead:fjord_highland",
+    "trailhead:volcanic_highland"]
+}

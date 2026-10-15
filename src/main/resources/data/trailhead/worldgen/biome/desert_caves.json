@@ -1,0 +1,41 @@
+{
+  "has_precipitation": false,
+  "temperature": 2.0,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 7254527,
+    "fog_color": 14204825,
+    "water_color": 4159204,
+    "water_fog_color": 329011,
+    "grass_color": 12564309,
+    "foliage_color": 11445290,
+    "mood_sound": { "sound": "minecraft:ambient.cave", "tick_delay": 6000, "block_search_extent": 8, "offset": 2.0 }
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    ["minecraft:amethyst_geode"],
+    ["minecraft:fossil_upper", "minecraft:fossil_lower", "minecraft:monster_room", "minecraft:monster_room_deep"],
+    [],
+    [],
+    ["minecraft:ore_dirt", "minecraft:ore_gravel", "minecraft:ore_granite_upper", "minecraft:ore_granite_lower", "minecraft:ore_diorite_upper", "minecraft:ore_diorite_lower", "minecraft:ore_andesite_upper", "minecraft:ore_andesite_lower", "minecraft:ore_tuff", "minecraft:ore_coal_upper", "minecraft:ore_coal_lower", "minecraft:ore_iron_upper", "minecraft:ore_iron_middle", "minecraft:ore_iron_small", "minecraft:ore_gold", "minecraft:ore_gold_lower", "minecraft:ore_redstone", "minecraft:ore_redstone_lower", "minecraft:ore_diamond", "minecraft:ore_diamond_medium", "minecraft:ore_diamond_large", "minecraft:ore_diamond_buried", "minecraft:ore_lapis", "minecraft:ore_lapis_buried", "minecraft:ore_copper", "minecraft:underwater_magma", "minecraft:disk_sand", "minecraft:disk_clay", "minecraft:disk_gravel"],
+    ["minecraft:pointed_dripstone"],
+    ["minecraft:spring_lava"],
+    [],
+    ["minecraft:freeze_top_layer"]
+  ],
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [
+      { "type": "minecraft:bat", "weight": 10, "minCount": 8, "maxCount": 8 }
+    ],
+    "monster": [
+      { "type": "minecraft:husk", "weight": 95, "minCount": 4, "maxCount": 4 },
+      { "type": "minecraft:spider", "weight": 100, "minCount": 4, "maxCount": 4 },
+      { "type": "minecraft:skeleton", "weight": 100, "minCount": 4, "maxCount": 4 },
+      { "type": "minecraft:creeper", "weight": 100, "minCount": 4, "maxCount": 4 },
+      { "type": "minecraft:enderman", "weight": 10, "minCount": 1, "maxCount": 4 }
+    ]
+  }
+}

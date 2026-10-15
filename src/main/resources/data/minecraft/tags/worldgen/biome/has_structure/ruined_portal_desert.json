@@ -1,0 +1,5 @@
+{
+  "replace": false,
+  "values": ["trailhead:sand_sea", "trailhead:rocky_desert", "trailhead:canyon_rim",
+    "trailhead:canyon_floor"]
+}
