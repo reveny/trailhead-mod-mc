@@ -10,7 +10,11 @@ public enum CaveType {
     private static final double SURFACE_DEPTH = 10.0;
 
     public static CaveType at(long seed, HeightField.Column col, int x, int y, int z) {
-        if (col.height - y < SURFACE_DEPTH) return SURFACE;
+        return at(seed, col, col.height, x, y, z);
+    }
+
+    public static CaveType at(long seed, HeightField.Column col, double surface, int x, int y, int z) {
+        if (surface - y < SURFACE_DEPTH) return SURFACE;
         if (y < -16 && patch(seed, 1, x, z, 320.0) > 0.42) return DEEP_DARK;
         Province province = col.province;
         boolean cold = province == Province.ICE_SHEET || province == Province.TUNDRA || col.temperature < 0.2;

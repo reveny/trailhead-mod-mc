@@ -6,6 +6,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoublePlantBlock;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
@@ -32,6 +34,15 @@ final class GroundCover {
     private static final Plant DRY_GRASS = Plant.single(Blocks.SHORT_DRY_GRASS);
     private static final Plant TALL_DRY_GRASS = Plant.single(Blocks.TALL_DRY_GRASS);
     private static final Plant DEAD_BUSH = Plant.single(Blocks.DEAD_BUSH);
+    private static final BlockState HUCKLEBERRY_LEAVES = Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+    private static final BlockState BLUEBERRY_LEAVES = Blocks.ACACIA_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+    private static final Plant HUCKLEBERRY = new Plant(HUCKLEBERRY_LEAVES, null);
+    private static final Plant TALL_HUCKLEBERRY = new Plant(HUCKLEBERRY_LEAVES, HUCKLEBERRY_LEAVES);
+    private static final Plant BLUEBERRY = new Plant(BLUEBERRY_LEAVES, null);
+    private static final Plant BERRIES = new Plant(Blocks.SWEET_BERRY_BUSH.defaultBlockState().setValue(SweetBerryBushBlock.AGE, 3), null);
+    private static final Plant[] MEADOW_FLOWERS = {
+            Plant.single(Blocks.CORNFLOWER), Plant.single(Blocks.ALLIUM), Plant.single(Blocks.POPPY), Plant.single(Blocks.OXEYE_DAISY)
+    };
     private static final Plant[] FLOWERS = {
             Plant.single(Blocks.DANDELION), Plant.single(Blocks.AZURE_BLUET), Plant.single(Blocks.OXEYE_DAISY),
             Plant.single(Blocks.CORNFLOWER), Plant.single(Blocks.POPPY), Plant.single(Blocks.ALLIUM)
@@ -51,6 +62,10 @@ final class GroundCover {
         double kind = NoiseHelper.hash01(seed + SEED_SURFACE + 7, x, z);
         boolean dryGround = ground == SurfacePalette.RED_SAND || ground == SurfacePalette.COARSE_DIRT;
         Province province = col.province;
+        boolean heathRegion = province == Province.CASCADIA || province == Province.ALPINE_VALLEY;
+        if (heathRegion && ground == SurfacePalette.GRASS && SubalpineHeath.covers(col, SubalpineHeath.patch(seed, x, z))) {
+            return heathPlant(seed, x, z, kind);
+        }
 
         double density = density(col, patch);
         boolean stepped = slope > 0.8;
@@ -129,6 +144,20 @@ final class GroundCover {
                 yield kind < 0.7 ? SHORT_GRASS : kind < 0.9 ? TALL_GRASS : BUSH;
             }
         };
+    }
+
+    private static Plant heathPlant(long seed, int x, int z, double kind) {
+        double thicket = SimplexNoise.noise2(seed + SEED_SURFACE + 16, x / 6.0, z / 6.0)
+                + 0.4 * SimplexNoise.noise2(seed + SEED_SURFACE + 17, x / 17.0, z / 17.0);
+        if (thicket > 0.0) {
+            if (kind < 0.25) return TALL_HUCKLEBERRY;
+            if (kind < 0.8) return HUCKLEBERRY;
+            return kind < 0.92 ? BLUEBERRY : BERRIES;
+        }
+        if (kind < 0.15) return MEADOW_FLOWERS[(int) (kind / 0.15 * MEADOW_FLOWERS.length) % MEADOW_FLOWERS.length];
+        if (kind < 0.3) return HUCKLEBERRY;
+        if (kind < 0.55) return kind < 0.45 ? DRY_GRASS : TALL_DRY_GRASS;
+        return kind < 0.85 ? SHORT_GRASS : null;
     }
 
     private static Plant flower(double kind, int spread) {

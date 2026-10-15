@@ -5,5 +5,7 @@
     "trailhead:temperate_meadow", "trailhead:temperate_woodland", "trailhead:sagebrush_flats",
     "trailhead:aspen_forest", "trailhead:temperate_rainforest", "trailhead:larch_basin",
     "trailhead:prairie", "trailhead:steppe", "trailhead:savanna",
-    "trailhead:boreal_forest", "trailhead:tundra", "trailhead:tropical_island"]
+    "trailhead:boreal_forest", "trailhead:tundra", "trailhead:tropical_island",
+    "trailhead:subalpine_heath_crimson", "trailhead:subalpine_heath_ember", "trailhead:subalpine_heath_gold",
+    "trailhead:granite_valley_floor", "trailhead:granite_highland"]
 }

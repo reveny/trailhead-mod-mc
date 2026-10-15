@@ -1,5 +1,5 @@
 {
   "replace": false,
   "values": ["trailhead:boreal_forest", "trailhead:temperate_rainforest", "trailhead:valley_forest",
-    "trailhead:aspen_forest"]
+    "trailhead:aspen_forest", "trailhead:granite_valley_floor"]
 }

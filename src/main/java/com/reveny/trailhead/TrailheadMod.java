@@ -2,6 +2,7 @@ package com.reveny.trailhead;
 
 import com.reveny.trailhead.worldgen.TrailheadBiomeSource;
 import com.reveny.trailhead.worldgen.TrailheadChunkGenerator;
+import com.reveny.trailhead.worldgen.feature.ConiferFeature;
 import com.reveny.trailhead.worldgen.feature.SnowIceSpikeFeature;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -27,6 +28,7 @@ public class TrailheadMod implements ModInitializer {
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR, id("terrain"), TrailheadChunkGenerator.CODEC);
         Registry.register(BuiltInRegistries.BIOME_SOURCE, id("terrain"), TrailheadBiomeSource.CODEC);
         Registry.register(BuiltInRegistries.FEATURE, id("snow_ice_spike"), new SnowIceSpikeFeature(NoneFeatureConfiguration.CODEC));
+        Registry.register(BuiltInRegistries.FEATURE, id("conifer"), new ConiferFeature(ConiferFeature.Config.CODEC));
 
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             worldSeed = server.getWorldData().worldGenOptions().seed();

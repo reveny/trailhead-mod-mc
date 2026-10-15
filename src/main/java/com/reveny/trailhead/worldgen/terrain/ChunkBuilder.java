@@ -142,7 +142,7 @@ public final class ChunkBuilder {
         faceStrength[sx * SHELL + sz] = faceMask;
         double own = heights[i][j];
         double strataOffset = faceMask > 0 ? SurfacePalette.strataOffset(seed, wx, wz) : 0;
-        boolean sandstone = cols[i][j].province == Province.CANYONLANDS;
+        double benches = benchiness(cols[i][j].province);
 
         int yTop = Math.min(MAX_Y - 1, (int) Math.ceil(faceMask > 0 ? high : own) + 1);
         int yFace = (int) Math.floor(faceMask > 0 ? low : own) - 1;
@@ -154,7 +154,7 @@ public final class ChunkBuilder {
             } else if (faceMask <= 0) {
                 filled = y + 0.5 < own;
             } else {
-                double surface = faceSurface(wx, y, wz, strataOffset, faceMask, own, high, sandstone,
+                double surface = faceSurface(wx, y, wz, strataOffset, faceMask, own, high, benches,
                         dilated1, dilated2, eroded1);
                 filled = y + 0.5 < surface;
             }
@@ -165,7 +165,7 @@ public final class ChunkBuilder {
     }
 
     private double faceSurface(int wx, int y, int wz, double strataOffset, double faceMask, double own, double high,
-                               boolean sandstone, double dilated1, double dilated2, double eroded1) {
+                               double benches, double dilated1, double dilated2, double eroded1) {
         double shiftedY = y + strataOffset;
         long band = (long) Math.floor(shiftedY / STRATA_UNIT);
         double withinBand = (shiftedY - band * STRATA_UNIT) / STRATA_UNIT;
@@ -175,11 +175,19 @@ public final class ChunkBuilder {
         boolean inBand = withinBand > 0.2 && withinBand < 0.8;
         if (faceMask <= 0.5 || !inBand || high - y < 2) return own;
 
-        double prominence = hardness * (0.65 + 0.35 * along) * (sandstone ? 0.5 : 1.0);
+        double prominence = hardness * (0.65 + 0.35 * along) * benches;
         if (prominence > 0.55) return dilated2;
         if (prominence > 0.2) return dilated1;
-        if (!sandstone && hardness < -0.5 && along > 0.1) return eroded1;
+        if (benches >= 1.0 && hardness < -0.5 && along > 0.1) return eroded1;
         return own;
+    }
+
+    private static double benchiness(Province province) {
+        return switch (province) {
+            case CANYONLANDS -> 0.5;
+            case GRANITE_VALLEY -> 0.25;
+            default -> 1.0;
+        };
     }
 
     private void removeFragments() {
@@ -469,7 +477,7 @@ public final class ChunkBuilder {
             return soil;
         }
         if (soil != null && depth <= DIRT_DEPTH && !(exposedSide(sx, sz, y) && depth >= 2)) {
-            return soil == SurfacePalette.DIRT && exposedSide(sx, sz, y) ? SurfacePalette.COARSE_DIRT : soil;
+            return soil == SurfacePalette.DIRT && exposedSide(sx, sz, y) ? stepFace(col) : soil;
         }
         BlockState vein = veins[index(sx, sz, y)];
         if (vein != null) return vein;
@@ -482,6 +490,11 @@ public final class ChunkBuilder {
                     : surfaceRock(sx, sz, x, y, z, strataOffset, col.province);
         }
         return SurfacePalette.STONE;
+    }
+
+    private static BlockState stepFace(HeightField.Column col) {
+        if (col.province == Province.CANYONLANDS || col.province == Province.DESERT) return SurfacePalette.COARSE_DIRT;
+        return SurfacePalette.dampCliffs(col) ? SurfacePalette.MOSS : SurfacePalette.GRASS;
     }
 
     private boolean caveAdjacent(int sx, int sz, int y) {
@@ -521,6 +534,9 @@ public final class ChunkBuilder {
             return soilNoise > 0.1 ? SurfacePalette.MOSSY_COBBLE : surfaceRock(sx, sz, x, y, z, strataOffset, province);
         }
         if (col.iceDepth > 1) return slope > 3.0 ? SurfacePalette.BLUE_ICE : SurfacePalette.SNOW;
+        if (col.cone > 0.22 + 0.04 * soilNoise) {
+            return slope < 4.5 ? SurfacePalette.SNOW : surfaceRock(sx, sz, x, y, z, strataOffset, province);
+        }
         double localTemperature = Climate.atHeight(col.temperature, y);
         if (localTemperature < SNOW_TEMPERATURE + soilNoise * 0.02 && slope < 3.5) return SurfacePalette.SNOW;
         if (col.dune > 0.3) return SurfacePalette.SAND;
@@ -576,8 +592,11 @@ public final class ChunkBuilder {
                                     int sx, int sz, double strataOffset) {
         Province province = col.province;
         boolean dry = province == Province.CANYONLANDS || province == Province.DESERT;
+        if (province == Province.GRANITE_VALLEY && col.trough < 0.3 && slope > 0.7 + 0.3 * soilNoise) {
+            return surfaceRock(sx, sz, x, y, z, strataOffset, province);
+        }
         if (slope <= GRASS_MAX_SLOPE + soilNoise * 0.3) {
-            return SurfacePalette.topsoil(col, soilNoise);
+            return SurfacePalette.topsoil(col, soilNoise, slope);
         }
         if (slope <= MOSS_MAX_SLOPE + soilNoise * 0.5) {
             if (dry) {
@@ -586,7 +605,7 @@ public final class ChunkBuilder {
             }
             double outcrop = SimplexNoise.noise2(seed + SEED_SURFACE + 11, x / 45.0, z / 45.0);
             boolean rocky = slope > 2.6 && outcrop > 0.4;
-            return rocky ? surfaceRock(sx, sz, x, y, z, strataOffset, province) : SurfacePalette.topsoil(col, soilNoise);
+            return rocky ? surfaceRock(sx, sz, x, y, z, strataOffset, province) : SurfacePalette.topsoil(col, soilNoise, slope);
         }
         if (!dry && !exposedSide(sx, sz, y) && soilNoise > -0.2) {
             return SurfacePalette.GRASS;

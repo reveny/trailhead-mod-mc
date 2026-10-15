@@ -53,6 +53,8 @@ public final class SurfacePalette {
             Blocks.GRANITE, 0.15, Blocks.SMOOTH_SANDSTONE, 0.2);
     private static final Strata KARST = Strata.of(
             Blocks.STONE, 0.35, Blocks.CALCITE, 0.2, Blocks.ANDESITE, 0.2, Blocks.TUFF, 0.15, Blocks.DIORITE, 0.1);
+    private static final Strata PALE_GRANITE = Strata.of(
+            Blocks.STONE, 0.34, Blocks.ANDESITE, 0.3, Blocks.DIORITE, 0.24, Blocks.SMOOTH_STONE, 0.07, Blocks.CALCITE, 0.05);
     private static final Strata SHIELD = Strata.of(
             Blocks.GRANITE, 0.3, Blocks.STONE, 0.3, Blocks.DIORITE, 0.15, Blocks.ANDESITE, 0.15, Blocks.DEEPSLATE, 0.1);
 
@@ -108,6 +110,7 @@ public final class SurfacePalette {
             case SEA_CLIFFS -> BASALT;
             case DOLOMITES -> DOLOMITE;
             case TETON -> GRANITE;
+            case GRANITE_VALLEY -> PALE_GRANITE;
             case CANYONLANDS -> {
                 double contact = SEA_LEVEL + 62 + 10 * SimplexNoise.noise2(seed + SEED_STRATA + 5, x / 300.0, z / 300.0);
                 yield y + offset * 0.4 > contact ? WHITE_ROCK : RED_ROCK;
@@ -147,28 +150,35 @@ public final class SurfacePalette {
             case CASCADIA -> 0.2;
             case FJORDLAND, SEA_CLIFFS -> 0.08;
             case CANYONLANDS -> -0.6;
-            case TETON, DOLOMITES -> -0.15;
+            case TETON, DOLOMITES, GRANITE_VALLEY -> -0.15;
             default -> 0.0;
         };
         return patches + damp + gorge + climate;
     }
 
-    static BlockState topsoil(HeightField.Column col, double soilNoise) {
+    static BlockState topsoil(HeightField.Column col, double soilNoise, double slope) {
+        BlockState soil = flatTopsoil(col, soilNoise);
+        boolean bareSoil = soil == PODZOL || soil == COARSE_DIRT;
+        boolean arid = col.province == Province.CANYONLANDS || col.province == Province.DESERT;
+        return bareSoil && !arid && slope > 0.7 ? GRASS : soil;
+    }
+
+    private static BlockState flatTopsoil(HeightField.Column col, double soilNoise) {
         return switch (col.province) {
             case CANYONLANDS -> {
                 double green = col.moisture + (col.riverDist < 30 ? 0.4 : 0.0) + soilNoise * 0.25;
                 yield green > 0.62 ? GRASS : soilNoise > 0.1 ? RED_SAND : COARSE_DIRT;
             }
-            case CASCADIA -> soilNoise < -0.45 ? PODZOL : GRASS;
-            case TETON -> soilNoise < -0.55 ? COARSE_DIRT : GRASS;
+            case CASCADIA -> soilNoise < -0.75 ? PODZOL : GRASS;
+            case TETON -> soilNoise < -0.75 ? COARSE_DIRT : GRASS;
             case DESERT -> {
                 if (col.riverDist < 6) yield GRASS;
                 yield soilNoise > 0.25 ? SAND : soilNoise > -0.3 ? GRAVEL : COARSE_DIRT;
             }
             case STEPPE -> soilNoise < -0.35 ? COARSE_DIRT : GRASS;
             case SAVANNA -> soilNoise < -0.5 ? COARSE_DIRT : soilNoise > 0.7 ? RED_SAND : GRASS;
-            case JUNGLE -> soilNoise < -0.4 ? PODZOL : col.riverDist < 4 ? MUD : GRASS;
-            case BOREAL -> soilNoise < -0.2 ? PODZOL : soilNoise > 0.6 ? MOSS : GRASS;
+            case JUNGLE -> soilNoise < -0.65 ? PODZOL : col.riverDist < 4 ? MUD : GRASS;
+            case BOREAL -> soilNoise < -0.55 ? PODZOL : soilNoise > 0.6 ? MOSS : GRASS;
             case TUNDRA -> soilNoise < -0.4 ? COARSE_DIRT : soilNoise > 0.55 ? MOSS : GRASS;
             default -> soilNoise < -0.8 ? COARSE_DIRT : GRASS;
         };

@@ -4,11 +4,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.reveny.trailhead.TrailheadMod;
-import com.reveny.trailhead.noise.NoiseHelper;
 import com.reveny.trailhead.worldgen.terrain.CaveType;
 import com.reveny.trailhead.worldgen.terrain.Climate;
 import com.reveny.trailhead.worldgen.terrain.HeightField;
 import com.reveny.trailhead.worldgen.terrain.Province;
+import com.reveny.trailhead.worldgen.terrain.SubalpineHeath;
 import com.reveny.trailhead.worldgen.terrain.TerrainContext;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
@@ -63,6 +63,11 @@ public class TrailheadBiomeSource extends BiomeSource {
     static final ResourceKey<Biome> ICE_SHEET = key("ice_sheet");
     static final ResourceKey<Biome> DESERT_CAVES = key("desert_caves");
     static final ResourceKey<Biome> ICE_CAVES = key("ice_caves");
+    static final ResourceKey<Biome> HEATH_CRIMSON = key("subalpine_heath_crimson");
+    static final ResourceKey<Biome> HEATH_EMBER = key("subalpine_heath_ember");
+    static final ResourceKey<Biome> HEATH_GOLD = key("subalpine_heath_gold");
+    static final ResourceKey<Biome> GRANITE_VALLEY_FLOOR = key("granite_valley_floor");
+    static final ResourceKey<Biome> GRANITE_HIGHLAND = key("granite_highland");
 
     private static final ResourceKey<Biome>[] ALL_BIOMES = biomes(
             Biomes.LUSH_CAVES, Biomes.DRIPSTONE_CAVES, Biomes.DEEP_DARK, DESERT_CAVES, ICE_CAVES,
@@ -74,10 +79,11 @@ public class TrailheadBiomeSource extends BiomeSource {
             TEMPERATE_WOODLAND, SAGEBRUSH_FLATS, ASPEN_FOREST, TEMPERATE_RAINFOREST, LARCH_BASIN,
             CANYON_RIM, CANYON_FLOOR, PRAIRIE, STEPPE, SAVANNA, SAND_SEA, ROCKY_DESERT,
             TROPICAL_RAINFOREST, MANGROVE_COAST, TROPICAL_ISLAND, VOLCANIC_HIGHLAND,
-            BOREAL_FOREST, TUNDRA, ICE_SHEET);
+            BOREAL_FOREST, TUNDRA, ICE_SHEET, HEATH_CRIMSON, HEATH_EMBER, HEATH_GOLD,
+            GRANITE_VALLEY_FLOOR, GRANITE_HIGHLAND);
 
     private static final int CACHE_SIZE = 4096;
-    private static final long SEED_BIOME_PATCH = 31000L;
+    private static final int[][] WALL_PROBES = {{12, 0}, {-12, 0}, {0, 12}, {0, -12}};
 
     private final HolderGetter<Biome> biomeRegistry;
     private final Climate.Mode mode;
@@ -117,14 +123,23 @@ public class TrailheadBiomeSource extends BiomeSource {
         int x = quartX << 2, z = quartZ << 2;
         if (c.surface[slot] == null || c.keys[slot] != key) {
             HeightField.Column col = TerrainContext.get(seed, mode).field.sampleWithoutRivers(x, z);
-            double patch = NoiseHelper.fbm2(seed + SEED_BIOME_PATCH, x, z, 260.0, 3) * 0.5 + 0.5;
+            double patch = SubalpineHeath.patch(seed, x, z);
             c.keys[slot] = key;
             c.columns[slot] = col;
-            c.surface[slot] = biomeRegistry.getOrThrow(pick(col, patch));
+            c.lowestSurface[slot] = lowestSurface(TerrainContext.get(seed, mode).field, x, z, col.height);
+            c.surface[slot] = biomeRegistry.getOrThrow(pick(col, patch, SubalpineHeath.tint(seed, x, z)));
         }
-        CaveType caveType = CaveType.at(seed, c.columns[slot], x, quartY << 2, z);
+        CaveType caveType = CaveType.at(seed, c.columns[slot], c.lowestSurface[slot], x, quartY << 2, z);
         if (caveType == CaveType.SURFACE) return c.surface[slot];
         return biomeRegistry.getOrThrow(cave(caveType));
+    }
+
+    private static double lowestSurface(HeightField field, int x, int z, double own) {
+        double lowest = own;
+        for (int[] offset : WALL_PROBES) {
+            lowest = Math.min(lowest, field.sampleWithoutRivers(x + offset[0], z + offset[1]).height);
+        }
+        return lowest;
     }
 
     static ResourceKey<Biome> cave(CaveType type) {
@@ -148,17 +163,27 @@ public class TrailheadBiomeSource extends BiomeSource {
         return deep ? Biomes.DEEP_FROZEN_OCEAN : Biomes.FROZEN_OCEAN;
     }
 
-    static ResourceKey<Biome> pick(HeightField.Column col, double patch) {
+    static ResourceKey<Biome> heath(SubalpineHeath.Tint tint) {
+        return switch (tint) {
+            case CRIMSON -> HEATH_CRIMSON;
+            case EMBER -> HEATH_EMBER;
+            case GOLD -> HEATH_GOLD;
+        };
+    }
+
+    static ResourceKey<Biome> pick(HeightField.Column col, double patch, SubalpineHeath.Tint tint) {
         if (col.height < SEA_LEVEL - 0.5) return ocean(col);
         double elevation = col.height - SEA_LEVEL;
         double temperature = Climate.atHeight(col.temperature, col.height);
-        if (col.height > 268 || (temperature < 0.02 && col.province != Province.ICE_SHEET)) {
+        if (col.height > SEA_LEVEL + 175 || (temperature < 0.02 && col.province != Province.ICE_SHEET)) {
             return ALPINE_SUMMIT;
         }
         boolean shore = col.coastDist < 10 && elevation < 4;
         if (col.atoll > 0.3) return TROPICAL_ISLAND;
         if (col.volcanic > 0.55 && elevation > 40) return VOLCANIC_HIGHLAND;
         double moisture = col.moisture;
+        if (col.cone > 0.2) return ALPINE_SUMMIT;
+        if (SubalpineHeath.covers(col, patch)) return heath(tint);
         return switch (col.province) {
             case SEA_CLIFFS -> shore ? Biomes.BEACH : COASTAL_GRASSLAND;
             case FJORDLAND -> {
@@ -173,17 +198,26 @@ public class TrailheadBiomeSource extends BiomeSource {
             case ALPINE_VALLEY -> {
                 if (col.massif > 0.4) yield ALPINE_SCREE;
                 if (elevation < 75) yield patch > 0.55 ? AUTUMN_FOREST : VALLEY_FOREST;
-                if (elevation < 150) yield patch < 0.35 ? ALPINE_MEADOW : SUBALPINE_FOREST;
-                yield elevation > 175 ? ALPINE_SCREE : ALPINE_MEADOW;
+                if (elevation < 175 && SubalpineHeath.zone(col) != SubalpineHeath.Zone.ALPINE) {
+                    yield patch < 0.35 ? ALPINE_MEADOW : SUBALPINE_FOREST;
+                }
+                yield ALPINE_SCREE;
             }
             case TETON -> {
                 if (col.mountain > 0.5) yield elevation < 130 ? SUBALPINE_FOREST : ALPINE_SCREE;
                 yield moisture > 0.55 && patch > 0.5 ? ASPEN_FOREST : SAGEBRUSH_FLATS;
             }
             case CASCADIA -> {
-                if (elevation < 150) yield TEMPERATE_RAINFOREST;
-                if (elevation < 200) yield patch > 0.55 ? LARCH_BASIN : SUBALPINE_FOREST;
-                yield patch > 0.7 ? LARCH_BASIN : ALPINE_SCREE;
+                yield switch (SubalpineHeath.zone(col)) {
+                    case MONTANE -> TEMPERATE_RAINFOREST;
+                    case SUBALPINE -> SUBALPINE_FOREST;
+                    case HEATH -> LARCH_BASIN;
+                    case ALPINE -> ALPINE_SCREE;
+                };
+            }
+            case GRANITE_VALLEY -> {
+                if (col.trough > 0.5) yield GRANITE_VALLEY_FLOOR;
+                yield elevation > 190 ? ALPINE_SCREE : GRANITE_HIGHLAND;
             }
             case CANYONLANDS -> elevation < 45 ? CANYON_FLOOR : CANYON_RIM;
             case TEMPERATE_HILLS -> {
@@ -222,6 +256,7 @@ public class TrailheadBiomeSource extends BiomeSource {
     private static final class Cache {
         final long[] keys = new long[CACHE_SIZE];
         final HeightField.Column[] columns = new HeightField.Column[CACHE_SIZE];
+        final double[] lowestSurface = new double[CACHE_SIZE];
         @SuppressWarnings("unchecked")
         final Holder<Biome>[] surface = new Holder[CACHE_SIZE];
         long seed = Long.MIN_VALUE;

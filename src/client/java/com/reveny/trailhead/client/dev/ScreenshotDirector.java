@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -167,6 +168,7 @@ public final class ScreenshotDirector {
             } else {
                 player.removeEffect(MobEffects.NIGHT_VISION);
             }
+            level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
             level.setDayTime(viewpoint.dayTime());
             level.setWeatherParameters(12000, 0, false, false);
             player.teleportTo(level, viewpoint.x(), viewpoint.y(), viewpoint.z(), Set.of(), viewpoint.yaw(), viewpoint.pitch(), false);

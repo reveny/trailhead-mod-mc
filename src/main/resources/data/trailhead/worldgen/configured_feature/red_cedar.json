@@ -1,0 +1,15 @@
+{
+  "type": "trailhead:conifer",
+  "config": {
+    "log": { "Name": "minecraft:mangrove_log", "Properties": { "axis": "y" } },
+    "leaves": { "Name": "minecraft:spruce_leaves" },
+    "height": { "type": "minecraft:uniform", "min_inclusive": 20, "max_inclusive": 28 },
+    "giant": true,
+    "crown": 0.8,
+    "radius": 5.8,
+    "belly": 0.88,
+    "whorl": 2,
+    "droop": 2,
+    "density": 0.72
+  }
+}

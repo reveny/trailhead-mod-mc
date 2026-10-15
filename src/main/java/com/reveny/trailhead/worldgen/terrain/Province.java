@@ -5,7 +5,7 @@ import java.util.Arrays;
 public enum Province {
     TEMPERATE_HILLS(hills(14, 30, 18), mountains(0.00, 150, 1.35, 0.20), plateau(-0.12, 18, 0.5),
             massif(0.0, 0), relief(0.0, 0.0, 0.00, 2.5), placement(0.5, 1.0), climate(0.42, 0.72, 0.40, 0.85)),
-    SEA_CLIFFS(hills(10, 20, 15), mountains(-0.30, 80, 1.30, 0.20), plateau(0.12, 12, 0.80),
+    SEA_CLIFFS(hills(10, 20, 15), mountains(-0.30, 80, 1.30, 0.20), plateau(0.12, 12, 0.55),
             massif(0.0, 0), relief(0.3, 0.0, 0.35, 2.0), placement(1.3, 0.0), climate(0.30, 0.65, 0.30, 1.00)),
     FJORDLAND(hills(15, 35, 25), mountains(0.25, 185, 1.20, 0.20), plateau(-0.10, 18, 0.5),
             massif(0.0, 0), relief(0.2, 1.0, 0.25, 3.0), placement(1.0, 0.0), climate(0.22, 0.50, 0.45, 1.00)),
@@ -34,7 +34,9 @@ public enum Province {
     TUNDRA(hills(4, 8, 10), mountains(-0.10, 120, 1.20, 0.25), plateau(-0.30, 18, 0.5),
             massif(0.0, 0), relief(0.0, 1.0, -0.10, 1.0), placement(0.8, 1.0), climate(0.08, 0.26, 0.00, 1.00)),
     ICE_SHEET(hills(6, 14, 45), mountains(0.10, 150, 1.20, 0.25), plateau(-0.40, 18, 0.5),
-            massif(0.0, 0), relief(0.0, 1.0, 0.30, 0.6), placement(1.0, 1.0), climate(0.00, 0.12, 0.00, 1.00));
+            massif(0.0, 0), relief(0.0, 1.0, 0.30, 0.6), placement(1.0, 1.0), climate(0.00, 0.12, 0.00, 1.00)),
+    GRANITE_VALLEY(hills(12, 26, 40), mountains(0.05, 150, 1.25, 0.20), plateau(-0.30, 18, 0.5),
+            massif(0.0, 0), relief(0.0, 1.0, 0.00, 2.0), placement(0.4, 0.9), climate(0.46, 0.70, 0.28, 0.60));
 
     private static final Province[] VALUES = values();
 
@@ -86,6 +88,23 @@ public enum Province {
             case SEA_CLIFFS, CASCADIA, TUNDRA -> 0.3;
             case FJORDLAND, BOREAL -> 0.25;
             case TETON -> 0.2;
+            case GRANITE_VALLEY -> 0.15;
+        };
+    }
+
+    public double rockyCoast() {
+        return switch (this) {
+            case SEA_CLIFFS, FJORDLAND, CASCADIA, GRANITE_VALLEY -> 1.0;
+            case TEMPERATE_HILLS, ALPINE_VALLEY, DOLOMITES, TETON -> 0.35;
+            default -> 0.0;
+        };
+    }
+
+    public double aridity() {
+        return switch (this) {
+            case CANYONLANDS, DESERT -> 1.0;
+            case STEPPE, SAVANNA -> 0.8;
+            default -> 0.0;
         };
     }
 
@@ -147,7 +166,7 @@ public enum Province {
         public double plateauBias, terraceStep, riserStart;
         public double massif, massifHeight;
         public double canyon, glacial, cliffBias, detail;
-        public double karst;
+        public double karst, rockyCoast, aridity;
         public Province dominant = TEMPERATE_HILLS;
         public final double[] weights = new double[VALUES.length];
 
@@ -157,7 +176,7 @@ public enum Province {
             plateauBias = terraceStep = riserStart = 0;
             massif = massifHeight = 0;
             canyon = glacial = cliffBias = detail = 0;
-            karst = 0;
+            karst = rockyCoast = aridity = 0;
             Arrays.fill(weights, 0);
         }
 
@@ -183,6 +202,8 @@ public enum Province {
             cliffBias += province.cliffBias * weight;
             detail += province.detail * weight;
             karst += province.karst() * weight;
+            rockyCoast += province.rockyCoast() * weight;
+            aridity += province.aridity() * weight;
             weights[province.ordinal()] += weight;
         }
     }

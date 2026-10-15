@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:random_patch",
+  "config": {
+    "tries": 28,
+    "xz_spread": 6,
+    "y_spread": 3,
+    "feature": {
+      "feature": {
+        "type": "minecraft:random_selector",
+        "config": {
+          "default": "trailhead:subalpine_fir_checked",
+          "features": [
+            { "chance": 0.15, "feature": "trailhead:mountain_hemlock_checked" },
+            { "chance": 0.06, "feature": "trailhead:silver_snag_checked" }
+          ]
+        }
+      },
+      "placement": []
+    }
+  }
+}

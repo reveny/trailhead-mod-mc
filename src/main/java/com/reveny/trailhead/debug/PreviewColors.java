@@ -45,11 +45,14 @@ final class PreviewColors {
             Map.entry(Blocks.SMOOTH_RED_SANDSTONE, 0xB5621F),
             Map.entry(Blocks.SANDSTONE, 0xD8CB9B),
             Map.entry(Blocks.SMOOTH_SANDSTONE, 0xD8CB9B),
-            Map.entry(Blocks.CUT_SANDSTONE, 0xD8CB9B));
+            Map.entry(Blocks.CUT_SANDSTONE, 0xD8CB9B),
+            Map.entry(Blocks.SMOOTH_STONE, 0x9E9E9E),
+            Map.entry(Blocks.OAK_LEAVES, 0xB5501F),
+            Map.entry(Blocks.ACACIA_LEAVES, 0xC8781F));
 
     static {
         int[] colors = {0x6FA552, 0x4F7FA8, 0x2F5F78, 0xD8D2C0, 0x8FB070, 0xB89070, 0x1F5F3A, 0xC0502A,
-                0xC8D66A, 0xB8A860, 0xD2B04A, 0xF0D890, 0x0F7A2A, 0x3C6E4A, 0x9AA890, 0xF4F8FC};
+                0xC8D66A, 0xB8A860, 0xD2B04A, 0xF0D890, 0x0F7A2A, 0x3C6E4A, 0x9AA890, 0xF4F8FC, 0xA8A8B4};
         Province[] provinces = Province.values();
         for (int i = 0; i < provinces.length; i++) PROVINCES.put(provinces[i], colors[i % colors.length]);
     }

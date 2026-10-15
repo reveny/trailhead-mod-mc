@@ -1,7 +1,7 @@
 package com.reveny.trailhead.noise;
 
 public final class NoiseConfig {
-    public static final int SEA_LEVEL = 80;
+    public static final int SEA_LEVEL = 63;
     public static final int MIN_Y = -64;
     public static final int GEN_DEPTH = 384;
     public static final int MAX_Y = MIN_Y + GEN_DEPTH;
@@ -14,6 +14,7 @@ public final class NoiseConfig {
     public static final double CONTINENT_WARP_STRENGTH = 300.0;
     public static final double CONTINENT_FINE_WARP = 0.2;
     public static final double COAST_GRADIENT_STEP = 8.0;
+    public static final double COAST_FAR_GRADIENT_STEP = 48.0;
     public static final double COAST_GRADIENT_FLOOR = 1.2e-4;
     public static final double COAST_JAG_SCALE = 90.0;
     public static final double COAST_JAG_STRENGTH = 16.0;
@@ -37,7 +38,7 @@ public final class NoiseConfig {
     public static final double CLIMATE_ZONE_SCALE = 170000.0;
     public static final double MOUNTAIN_BELT_SCALE = 30000.0;
     public static final double CLIMATE_RAIN_SCALE = 18000.0;
-    public static final double CLIMATE_LAPSE = 0.0019;
+    public static final double CLIMATE_LAPSE = 0.0025;
     public static final double SNOW_TEMPERATURE = 0.13;
 
     public static final double PROVINCE_SIZE = 3500.0;
@@ -63,12 +64,28 @@ public final class NoiseConfig {
 
     public static final double HYPSOMETRIC_REF = 200.0;
     public static final double HYPSOMETRIC_GAMMA = 1.4;
+    public static final double RELIEF_SCALE = 0.85;
 
     public static final double MOUNTAIN_MIN_EDGE = 0.3;
     public static final double MOUNTAIN_MASK_SCALE = 3200.0;
     public static final double MOUNTAIN_SCALE = 2200.0;
     public static final int MOUNTAIN_OCTAVES = 5;
-    public static final double HEIGHT_KNEE = 70.0;
+    public static final double HEIGHT_KNEE = 35.0;
+
+    public static final double TROUGH_SCALE = 2600.0;
+    public static final double TROUGH_FLOOR_HALF_WIDTH = 70.0;
+    public static final double TROUGH_WALL_WIDTH = 22.0;
+    public static final double TROUGH_WALL_MIN = 50.0;
+    public static final double TROUGH_WALL_MAX = 100.0;
+    public static final double HANGING_TROUGH_SCALE = 950.0;
+    public static final double HANGING_TROUGH_HALF_WIDTH = 22.0;
+    public static final double HANGING_TROUGH_WALL_WIDTH = 30.0;
+    public static final double DOME_CELL = 900.0;
+    public static final double DOME_CHANCE = 0.55;
+
+    public static final double STRATOVOLCANO_CELL = 9000.0;
+    public static final double STRATOVOLCANO_CHANCE = 0.6;
+    public static final double STRATOVOLCANO_SUMMIT = 172.0;
 
     public static final double PLATEAU_MASK_SCALE = 1500.0;
     public static final double PLATEAU_STRENGTH = 0.92;
@@ -78,8 +95,9 @@ public final class NoiseConfig {
     public static final double CLIFF_HEIGHT_MIN = 30.0;
     public static final double CLIFF_HEIGHT_MAX = 95.0;
     public static final double CLIFF_FACE_WIDTH = 3.0;
-    public static final double CLIFF_INLAND_FADE_START = 220.0;
-    public static final double CLIFF_INLAND_FADE_END = 800.0;
+    public static final double CLIFF_INLAND_FADE_START = 200.0;
+    public static final double CLIFF_INLAND_FADE_END = 1100.0;
+    public static final double BLUFF_FACE_WIDTH = 14.0;
     public static final double GENTLE_COAST_RAMP = 140.0;
     public static final double STACK_SCALE = 46.0;
     public static final double STACK_REGION_SCALE = 900.0;
@@ -144,6 +162,8 @@ public final class NoiseConfig {
     public static final long SEED_DUNE = 26000L;
     public static final long SEED_ICE = 27000L;
     public static final long SEED_CAVE = 28000L;
+    public static final long SEED_GRANITE = 29000L;
+    public static final long SEED_STRATOVOLCANO = 30000L;
 
     public static final int CAVE_MIN_COVER = 8;
     public static final int CAVE_MIN_COVER_UNDER_WATER = 14;

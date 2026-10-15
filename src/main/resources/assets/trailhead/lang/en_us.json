@@ -31,5 +31,10 @@
   "biome.trailhead.tundra": "Tundra",
   "biome.trailhead.ice_sheet": "Ice Sheet",
   "biome.trailhead.desert_caves": "Desert Caves",
-  "biome.trailhead.ice_caves": "Ice Caves"
+  "biome.trailhead.ice_caves": "Ice Caves",
+  "biome.trailhead.subalpine_heath_crimson": "Crimson Heath",
+  "biome.trailhead.subalpine_heath_ember": "Ember Heath",
+  "biome.trailhead.subalpine_heath_gold": "Golden Heath",
+  "biome.trailhead.granite_valley_floor": "Granite Valley",
+  "biome.trailhead.granite_highland": "Granite Highland"
 }

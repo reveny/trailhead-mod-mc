@@ -9,6 +9,8 @@
     "trailhead:prairie", "trailhead:steppe", "trailhead:savanna", "trailhead:sand_sea",
     "trailhead:rocky_desert", "trailhead:tropical_rainforest", "trailhead:mangrove_coast",
     "trailhead:tropical_island", "trailhead:volcanic_highland", "trailhead:boreal_forest",
-    "trailhead:tundra", "trailhead:ice_sheet", "trailhead:desert_caves", "trailhead:ice_caves"
+    "trailhead:tundra", "trailhead:ice_sheet", "trailhead:desert_caves", "trailhead:ice_caves",
+    "trailhead:subalpine_heath_crimson", "trailhead:subalpine_heath_ember", "trailhead:subalpine_heath_gold",
+    "trailhead:granite_valley_floor", "trailhead:granite_highland"
   ]
 }

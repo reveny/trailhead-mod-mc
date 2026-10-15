@@ -3,7 +3,7 @@
 	"id": "trailhead",
 	"version": "${version}",
 	"name": "Trailhead",
-	"description": "Realistic, national park inspired world generation: climate zones, mountain ranges, canyons, fjords, rivers, lakes, waterfalls and geology-aware caves.",
+	"description": "Realistic, national-park inspired world generation: climate zones, mountain ranges, canyons, fjords, rivers, lakes, waterfalls and geology-aware caves.",
 	"authors": [
 		"Reveny"
 	],

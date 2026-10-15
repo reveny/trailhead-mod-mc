@@ -1,10 +1,13 @@
 {
   "type": "minecraft:random_selector",
   "config": {
-    "default": "minecraft:spruce_checked",
+    "default": "trailhead:mountain_hemlock_checked",
     "features": [
-      { "chance": 0.45, "feature": "minecraft:mega_spruce_checked" },
-      { "chance": 0.1, "feature": "minecraft:fallen_spruce_tree" }
+      { "chance": 0.32, "feature": "trailhead:douglas_fir_checked" },
+      { "chance": 0.25, "feature": "trailhead:red_cedar_checked" },
+      { "chance": 0.1, "feature": "minecraft:fallen_spruce_tree" },
+      { "chance": 0.1, "feature": "trailhead:subalpine_fir_checked" },
+      { "chance": 0.04, "feature": "trailhead:silver_snag_checked" }
     ]
   }
 }

@@ -1,0 +1,14 @@
+{
+  "type": "trailhead:conifer",
+  "config": {
+    "log": { "Name": "minecraft:spruce_log", "Properties": { "axis": "y" } },
+    "leaves": { "Name": "minecraft:spruce_leaves" },
+    "height": { "type": "minecraft:uniform", "min_inclusive": 9, "max_inclusive": 15 },
+    "crown": 0.88,
+    "radius": 2.1,
+    "belly": 0.9,
+    "whorl": 2,
+    "droop": 0,
+    "density": 0.85
+  }
+}

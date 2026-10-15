@@ -27,6 +27,7 @@ public final class HeightField {
         public double dune;
         public double volcanic, atoll;
         public double karst;
+        public double trough, cone;
 
         public boolean inRiver() {
             return !Double.isNaN(water);
@@ -56,6 +57,8 @@ public final class HeightField {
             c.volcanic = volcanic;
             c.atoll = atoll;
             c.karst = karst;
+            c.trough = trough;
+            c.cone = cone;
             return c;
         }
     }
@@ -66,12 +69,33 @@ public final class HeightField {
     private final long seed;
     private final Climate climate;
     private final ProvinceMap provinces;
+    private final GraniteValleys graniteValleys;
+    private final Stratovolcanoes stratovolcanoes;
     private RiverNetwork rivers;
 
     public HeightField(long seed, Climate.Mode mode) {
         this.seed = seed;
         this.climate = new Climate(seed, mode);
         this.provinces = new ProvinceMap(seed, this);
+        this.graniteValleys = new GraniteValleys(seed);
+        this.stratovolcanoes = new Stratovolcanoes(seed, new Stratovolcanoes.Probe() {
+            @Override
+            public double cascadiaWeight(double x, double z) {
+                Province.Profile profile = new Province.Profile();
+                provinces.profile(x, z, profile);
+                return profile.weight(Province.CASCADIA);
+            }
+
+            @Override
+            public double relief(double x, double z) {
+                return computeBase(x, z, new Column(), false) - SEA_LEVEL;
+            }
+
+            @Override
+            public double coastDistance(double x, double z) {
+                return HeightField.this.coastDistance(x, z);
+            }
+        });
     }
 
     public Climate climate() {
@@ -97,22 +121,32 @@ public final class HeightField {
     }
 
     public double coastDistance(double x, double z) {
-        double step = COAST_GRADIENT_STEP;
-        double c0 = continent(x, z);
-        double gx = (continent(x + step, z) - c0) / step;
-        double gz = (continent(x, z + step) - c0) / step;
-        double gradient = Math.sqrt(gx * gx + gz * gz + COAST_GRADIENT_FLOOR * COAST_GRADIENT_FLOOR);
-        double local = c0 / gradient;
-        double far = c0 / COAST_GRADIENT_FLOOR;
-        double farWeight = NoiseHelper.smoothstep(0.008, 0.03, Math.abs(c0));
+        double base = baseContinent(x, z);
+        double c0 = base > 0.02 ? base : base + islands(x, z, base, null);
+        double local = c0 / continentGradient(x, z, c0, COAST_GRADIENT_STEP);
+        double far = c0 / continentGradient(x, z, c0, COAST_FAR_GRADIENT_STEP);
+        double isletLand = c0 > 0 ? 1.0 - NoiseHelper.smoothstep(-0.02, 0.04, base) : 0.0;
+        double farWeight = NoiseHelper.smoothstep(0.008, 0.03, Math.abs(c0)) * (1.0 - isletLand);
         double distance = NoiseHelper.clamp(NoiseHelper.lerp(local, far, farWeight), -2000.0, 2000.0);
         distance += COAST_JAG_STRENGTH * SimplexNoise.noise2(seed + SEED_COAST_JAG, x / COAST_JAG_SCALE, z / COAST_JAG_SCALE);
         distance += COAST_FINE_STRENGTH * SimplexNoise.noise2(seed + SEED_COAST_JAG + 1, x / COAST_FINE_SCALE, z / COAST_FINE_SCALE);
         return distance;
     }
 
+    private double continentGradient(double x, double z, double c0, double step) {
+        double gx = (continent(x + step, z) - c0) / step;
+        double gz = (continent(x, z + step) - c0) / step;
+        return Math.sqrt(gx * gx + gz * gz + COAST_GRADIENT_FLOOR * COAST_GRADIENT_FLOOR);
+    }
+
     public double baseHeight(double x, double z) {
-        return computeBase(x, z, new Column());
+        return computeBase(x, z, new Column(), true);
+    }
+
+    Column baseColumn(double x, double z) {
+        Column col = new Column();
+        computeBase(x, z, col, true);
+        return col;
     }
 
     public Column sample(double x, double z) {
@@ -125,7 +159,7 @@ public final class HeightField {
 
     public Column sampleWithoutRivers(double x, double z) {
         Column col = new Column();
-        double height = computeBase(x, z, col);
+        double height = computeBase(x, z, col, true);
         double detailAmplitude = (col.coastDist > 0 ? 0.6 : 0.3) * PROFILE.get().detail;
         height += detailAmplitude * NoiseHelper.fbm2(seed + SEED_DETAIL, x, z, DETAIL_SCALE, DETAIL_OCTAVES);
         height += rockRoughness(x, z, col);
@@ -157,7 +191,8 @@ public final class HeightField {
     private double islands(double x, double z, double base, Column col) {
         double signal = 0;
         double continental = NoiseHelper.fbm2(seed + SEED_ISLAND, x, z, ISLAND_CONTINENTAL_SCALE, 4);
-        signal += Math.max(0.0, continental - 0.36) * 0.7 * NoiseHelper.smoothstep(-0.32, -0.08, base);
+        signal += Math.max(0.0, continental - 0.36) * 0.7 * NoiseHelper.smoothstep(-0.32, -0.08, base)
+                * (1.0 - NoiseHelper.smoothstep(-0.04, 0.02, base));
 
         double temperature = climate.temperature(climate.latitude(x, z));
         double coolness = 1.0 - NoiseHelper.smoothstep(0.5, 0.62, temperature);
@@ -229,7 +264,8 @@ public final class HeightField {
         return new double[]{slope, cone};
     }
 
-    private double computeBase(double x, double z, Column col) {
+    private double computeBase(double x, double z, Column col, boolean withStratovolcanoes) {
+        Stratovolcanoes.Site volcano = withStratovolcanoes ? stratovolcanoes.siteNear(x, z) : null;
         Province.Profile profile = PROFILE.get();
         provinces.profile(x, z, profile);
         col.province = profile.dominant;
@@ -253,31 +289,27 @@ public final class HeightField {
         double mountainMask = col.mountain;
         relief = addMassifs(x, z, col, profile, relief, coastDist);
         if (relief > 0) {
-            relief = HYPSOMETRIC_REF * Math.pow(relief / HYPSOMETRIC_REF, HYPSOMETRIC_GAMMA);
+            relief = RELIEF_SCALE * HYPSOMETRIC_REF * Math.pow(relief / HYPSOMETRIC_REF, HYPSOMETRIC_GAMMA);
         }
         relief = addDunes(x, z, col, profile, relief, inland, mountainMask);
         relief = addIceSheet(x, z, col, profile, relief, coastDist);
         relief = addIslandShapes(col, relief, hills01);
+        double graniteWeight = profile.weight(Province.GRANITE_VALLEY);
+        if (graniteWeight > 0.0) {
+            relief = graniteValleys.shape(x, z, relief, inland, graniteWeight, col);
+        }
+        relief = stratovolcanoes.shape(volcano, x, z, relief, col);
 
         double cliffiness = NoiseHelper.smoothstep(0.42, 0.6,
                 NoiseHelper.fbm2(seed + SEED_CLIFF, x, z, CLIFF_MASK_SCALE, 3) * 0.5 + 0.5 + 0.1 * mountainMask + profile.cliffBias)
-                * (1.0 - NoiseHelper.smoothstep(0.0, 0.2, col.volcanic));
+                * (1.0 - NoiseHelper.smoothstep(0.0, 0.2, col.volcanic))
+                * profile.rockyCoast;
         col.cliffiness = cliffiness;
         double cliffTop = NoiseHelper.lerp(CLIFF_HEIGHT_MIN, CLIFF_HEIGHT_MAX, NoiseHelper.clamp(
                 (NoiseHelper.fbm2(seed + SEED_CLIFF + 100, x, z, CLIFF_HEIGHT_SCALE, 3) * 0.5 + 0.5 - 0.25) / 0.5, 0.0, 1.0));
-        double nearCoast = 1.0 - NoiseHelper.smoothstep(CLIFF_INLAND_FADE_START, CLIFF_INLAND_FADE_END, coastDist);
-        if (cliffiness > 0.0) {
-            double lifted = Math.max(relief, NoiseHelper.lerp(relief, cliffTop + 0.25 * relief, nearCoast));
-            relief = NoiseHelper.lerp(relief, lifted, cliffiness);
-        }
-
-        double plateau = NoiseHelper.smoothstep(0.6, 0.63,
-                NoiseHelper.fbm2(seed + SEED_PLATEAU, x, z, PLATEAU_MASK_SCALE, 3) * 0.5 + 0.5 + profile.plateauBias)
-                * (1.0 - NoiseHelper.smoothstep(0.2, 0.4, mountainMask))
-                * (1.0 - col.apron);
-        double coastalTiers = NoiseHelper.smoothstep(0.75, 0.9, cliffiness * nearCoast) * (1.0 - mountainMask);
-        plateau = Math.max(plateau, coastalTiers);
-        col.plateau = plateau;
+        double mainland = Math.max(NoiseHelper.smoothstep(-0.02, 0.03, base), profile.weight(Province.SEA_CLIFFS));
+        relief = liftCoastalCliffs(relief, cliffiness * mainland, cliffTop, coastDist);
+        double plateau = addPlateaus(x, z, col, profile, mountainMask);
         if (plateau > 0.0) {
             double terraced = terrace(x, z, relief, profile.terraceStep, profile.riserStart);
             relief = NoiseHelper.lerp(relief, terraced, plateau * PLATEAU_STRENGTH);
@@ -285,14 +317,33 @@ public final class HeightField {
 
         double height = softCap(SEA_LEVEL + relief);
         double seaFloor = seaFloor(x, z, col, coastDist);
-        double result = shapeCoast(x, z, height, seaFloor, coastDist, cliffiness, cliffTop);
+        double faceWidth = NoiseHelper.lerp(BLUFF_FACE_WIDTH, CLIFF_FACE_WIDTH, NoiseHelper.smoothstep(0.5, 1.0, profile.rockyCoast));
+        double result = shapeCoast(x, z, height, seaFloor, coastDist, cliffiness, cliffTop, faceWidth);
 
         double canyonNoise = NoiseHelper.smoothstep(0.52, 0.68,
                 NoiseHelper.fbm2(seed + SEED_CANYON, x, z, CANYON_SCALE, 2) * 0.5 + 0.5);
-        col.canyon = Math.max(Math.max(canyonNoise * 0.7 * (1.0 - profile.glacial), profile.canyon), plateau * 0.85);
+        double slotCanyons = canyonNoise * 0.7 * (1.0 - profile.glacial) * profile.aridity;
+        col.canyon = Math.max(Math.max(slotCanyons, profile.canyon), plateau * 0.85);
         col.moisture = NoiseHelper.clamp(NoiseHelper.fbm2(seed + SEED_MOISTURE, x, z, 1400.0, 3) * 0.5 + 0.5, 0.0, 1.0);
         col.height = result;
         return result;
+    }
+
+    private static double liftCoastalCliffs(double relief, double cliffiness, double cliffTop, double coastDist) {
+        if (cliffiness <= 0.0) return relief;
+        double nearCoast = 1.0 - NoiseHelper.smoothstep(CLIFF_INLAND_FADE_START, CLIFF_INLAND_FADE_END, coastDist);
+        double lifted = Math.max(relief, NoiseHelper.lerp(relief, cliffTop + 0.25 * relief, nearCoast));
+        return NoiseHelper.lerp(relief, lifted, cliffiness);
+    }
+
+    private double addPlateaus(double x, double z, Column col, Province.Profile profile, double mountainMask) {
+        double plateau = NoiseHelper.smoothstep(0.6, 0.63,
+                NoiseHelper.fbm2(seed + SEED_PLATEAU, x, z, PLATEAU_MASK_SCALE, 3) * 0.5 + 0.5 + profile.plateauBias)
+                * (1.0 - NoiseHelper.smoothstep(0.2, 0.4, mountainMask))
+                * (1.0 - col.apron)
+                * (1.0 - profile.weight(Province.GRANITE_VALLEY));
+        col.plateau = plateau;
+        return plateau;
     }
 
     private double addMountains(double x, double z, Column col, Province.Profile profile, double relief,
@@ -432,7 +483,7 @@ public final class HeightField {
     }
 
     private double shapeCoast(double x, double z, double height, double seaFloor, double coastDist,
-                              double cliffiness, double cliffTop) {
+                              double cliffiness, double cliffTop, double faceWidth) {
         double gentle = coastDist >= 0
                 ? SEA_LEVEL + 0.5 + (height - SEA_LEVEL - 0.5) * NoiseHelper.smoothstep(0.0, GENTLE_COAST_RAMP, coastDist)
                 : NoiseHelper.lerp(seaFloor, SEA_LEVEL + 0.5, NoiseHelper.smoothstep(-24.0, 0.0, coastDist));
@@ -443,7 +494,7 @@ public final class HeightField {
                 SimplexNoise.noise2(seed + SEED_CLIFF + 201, x / 5.0, z / 5.0)) * 3.0;
         double shelf = SEA_LEVEL - 1.6 + boulders;
         double cliff = coastDist >= 0
-                ? NoiseHelper.lerp(SEA_LEVEL + 1.0, height, NoiseHelper.smoothstep(0.0, CLIFF_FACE_WIDTH, coastDist))
+                ? NoiseHelper.lerp(SEA_LEVEL + 1.0, height, NoiseHelper.smoothstep(0.0, faceWidth, coastDist))
                 : NoiseHelper.lerp(seaFloor, shelf, NoiseHelper.smoothstep(-shelfWidth - 14.0, -shelfWidth, coastDist));
         double result = NoiseHelper.lerp(gentle, cliff, cliffiness);
         return addSeaStacks(x, z, result, coastDist, cliffiness, cliffTop);

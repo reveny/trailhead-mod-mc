@@ -18,6 +18,7 @@ public final class RiverNetwork {
     private static final int MAX_TILES = 32;
     private static final double SEAM_BAND = 192.0;
     private static final double MAX_LEVEE_HEIGHT = 3.0;
+    private static final double TROUGH_FLOOR_LAKE_LIMIT = 0.3;
 
     private final long seed;
     private final HeightField field;
@@ -427,7 +428,7 @@ public final class RiverNetwork {
         private final int cellCount;
         private final double[] cellX, cellZ, elevation, filled, rain, accumulation, riverLevel;
         private final int[] receiver, floodOrder, mainTributary;
-        private final boolean[] river;
+        private final boolean[] river, troughFloor;
         private int floodCount;
 
         TileSolver(Tile tile) {
@@ -445,6 +446,7 @@ public final class RiverNetwork {
             floodOrder = new int[cellCount];
             mainTributary = new int[cellCount];
             river = new boolean[cellCount];
+            troughFloor = new boolean[cellCount];
         }
 
         void solve() {
@@ -463,7 +465,9 @@ public final class RiverNetwork {
                     long gi = tile.gridOffsetX + i, gj = tile.gridOffsetZ + j;
                     cellX[k] = tile.originX + (i + 0.5) * RIVER_CELL + (NoiseHelper.hash01(seed + SEED_RIVER, gi, gj) - 0.5) * 2 * RIVER_JITTER;
                     cellZ[k] = tile.originZ + (j + 0.5) * RIVER_CELL + (NoiseHelper.hash01(seed + SEED_RIVER + 1, gi, gj) - 0.5) * 2 * RIVER_JITTER;
-                    elevation[k] = field.baseHeight(cellX[k], cellZ[k]);
+                    HeightField.Column col = field.baseColumn(cellX[k], cellZ[k]);
+                    elevation[k] = col.height;
+                    troughFloor[k] = col.trough > TROUGH_FLOOR_LAKE_LIMIT;
                 }
             }
         }
@@ -516,7 +520,7 @@ public final class RiverNetwork {
             float[] lake = tile.lake;
             Arrays.fill(lake, Float.NaN);
             for (int k = 0; k < cellCount; k++) {
-                if (elevation[k] <= SEA_LEVEL || filled[k] - elevation[k] <= LAKE_MIN_DEPTH) continue;
+                if (elevation[k] <= SEA_LEVEL || filled[k] - elevation[k] <= LAKE_MIN_DEPTH || troughFloor[k]) continue;
                 boolean dry = rain[k] < 0.22;
                 long gi = tile.gridOffsetX + k % grid, gj = tile.gridOffsetZ + k / grid;
                 if (dry && NoiseHelper.hash01(seed + SEED_RIVER + 30, gi / 8, gj / 8) > 0.12) continue;

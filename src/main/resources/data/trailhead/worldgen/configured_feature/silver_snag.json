@@ -1,0 +1,9 @@
+{
+  "type": "trailhead:conifer",
+  "config": {
+    "log": { "Name": "minecraft:pale_oak_log", "Properties": { "axis": "y" } },
+    "leaves": { "Name": "minecraft:air" },
+    "height": { "type": "minecraft:uniform", "min_inclusive": 6, "max_inclusive": 11 },
+    "dead": true
+  }
+}
